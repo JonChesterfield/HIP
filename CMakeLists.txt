@@ -248,7 +248,7 @@ if (HIP_PLATFORM STREQUAL "hcc")
 endif ()
 
 # Build hip_hcc if platform is hcc
-if(HIP_PLATFORM STREQUAL "hcc")
+if(HIP_PLATFORM STREQUAL "none")
     include_directories(${PROJECT_SOURCE_DIR}/include)
     set(HIP_HCC_BUILD_FLAGS)
     if(COMPILE_HIP_ATP_MARKER)
@@ -260,12 +260,14 @@ if(HIP_PLATFORM STREQUAL "hcc")
     set(HIP_HCC_BUILD_FLAGS "${HIP_HCC_BUILD_FLAGS} -DHIP_VERSION_MAJOR=${HIP_VERSION_MAJOR} -DHIP_VERSION_MINOR=${HIP_VERSION_MINOR} -DHIP_VERSION_PATCH=${HIP_VERSION_GITDATE}")
 
     # Add remaining flags
-    set(HCC_CXX_FLAGS  "-hc -fno-gpu-rdc --amdgpu-target=gfx803 --amdgpu-target=gfx900 --amdgpu-target=gfx906 --amdgpu-target=gfx908 ")
-    set(HIP_HCC_BUILD_FLAGS "${HIP_HCC_BUILD_FLAGS} -fPIC ${HCC_CXX_FLAGS} -I${HSA_PATH}/include")
+
+    set(HCC_CXX_FLAGS  "-x hip --cuda-gpu-arch=gfx906 -D__HIP__ ")
+    set(HIP_HCC_BUILD_FLAGS "${HIP_HCC_BUILD_FLAGS} -fPIC ${HCC_CXX_FLAGS} -I${HSA_PATH}/include -I/home/amd/aomp/hcc/include" )
 
     # Set compiler and compiler flags
-    set(CMAKE_CXX_COMPILER "${HCC_HOME}/bin/hcc")
-    set(CMAKE_C_COMPILER   "${HCC_HOME}/bin/hcc")
+    set(AOMP "/home/amd/rocm/aomp")
+    set(CMAKE_CXX_COMPILER "${AOMP}/bin/clang++")
+    set(CMAKE_C_COMPILER   "${AOMP}/bin/clang")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${HIP_HCC_BUILD_FLAGS}")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${HIP_HCC_BUILD_FLAGS}")
 
@@ -527,30 +529,30 @@ endif()
 #############################
 # Testing steps
 #############################
-# Target: test
-set(HIP_ROOT_DIR ${CMAKE_INSTALL_PREFIX})
-set(HIP_SRC_PATH ${CMAKE_CURRENT_SOURCE_DIR})
-execute_process(COMMAND "${CMAKE_COMMAND}" -E copy_directory "${HIP_SRC_PATH}/cmake" "${HIP_ROOT_DIR}/cmake" RESULT_VARIABLE RUN_HIT ERROR_QUIET)
-if(${RUN_HIT} EQUAL 0)
-    execute_process(COMMAND "${CMAKE_COMMAND}" -E copy_directory "${HIP_SRC_PATH}/bin" "${HIP_ROOT_DIR}/bin" RESULT_VARIABLE RUN_HIT ERROR_QUIET)
-endif()
-if(${RUN_HIT} EQUAL 0)
-    set(CMAKE_MODULE_PATH "${HIP_ROOT_DIR}/cmake" ${CMAKE_MODULE_PATH})
-    include(${HIP_SRC_PATH}/tests/hit/HIT.cmake)
-
-    # Add tests
-    include_directories(${HIP_SRC_PATH}/tests/src)
-    hit_add_directory_recursive(${HIP_SRC_PATH}/tests/src "directed_tests")
-
-    # Add top-level tests to build_tests
-    add_custom_target(build_tests DEPENDS directed_tests)
-
-    # Add custom target: check
-    add_custom_target(check COMMAND "${CMAKE_COMMAND}" --build . --target test DEPENDS build_tests)
-else()
-    message(STATUS "Testing targets will not be available. To enable them please ensure that the HIP installation directory is writeable. Use -DCMAKE_INSTALL_PREFIX to specify a suitable location")
-endif()
-
+# # Target: test
+# set(HIP_ROOT_DIR ${CMAKE_INSTALL_PREFIX})
+# set(HIP_SRC_PATH ${CMAKE_CURRENT_SOURCE_DIR})
+# execute_process(COMMAND "${CMAKE_COMMAND}" -E copy_directory "${HIP_SRC_PATH}/cmake" "${HIP_ROOT_DIR}/cmake" RESULT_VARIABLE RUN_HIT ERROR_QUIET)
+# if(${RUN_HIT} EQUAL 0)
+#     execute_process(COMMAND "${CMAKE_COMMAND}" -E copy_directory "${HIP_SRC_PATH}/bin" "${HIP_ROOT_DIR}/bin" RESULT_VARIABLE RUN_HIT ERROR_QUIET)
+# endif()
+# if(${RUN_HIT} EQUAL 0)
+#     set(CMAKE_MODULE_PATH "${HIP_ROOT_DIR}/cmake" ${CMAKE_MODULE_PATH})
+#     include(${HIP_SRC_PATH}/tests/hit/HIT.cmake)
+# 
+#     # Add tests
+#     include_directories(${HIP_SRC_PATH}/tests/src)
+#     hit_add_directory_recursive(${HIP_SRC_PATH}/tests/src "directed_tests")
+# 
+#     # Add top-level tests to build_tests
+#     add_custom_target(build_tests DEPENDS directed_tests)
+# 
+#     # Add custom target: check
+#     add_custom_target(check COMMAND "${CMAKE_COMMAND}" --build . --target test DEPENDS build_tests)
+# else()
+#     message(STATUS "Testing targets will not be available. To enable them please ensure that the HIP installation directory is writeable. Use -DCMAKE_INSTALL_PREFIX to specify a suitable location")
+# endif()
+# 
 #############################
 # Code analysis
 #############################
